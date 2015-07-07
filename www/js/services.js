@@ -1,35 +1,11 @@
 angular.module('starter.services', [])
 
-.factory('Chats', function() {
+.factory('Chats', function(Data) {
   // Might use a resource here that returns a JSON array
-
-  // Some fake testing data
-  var chats = [{
-    id: 0,
-    name: 'Ben Sparrow',
-    lastText: 'You on your way?',
-    face: 'https://pbs.twimg.com/profile_images/514549811765211136/9SgAuHeY.png'
-  }, {
-    id: 1,
-    name: 'Max Lynx',
-    lastText: 'Hey, it\'s me',
-    face: 'https://avatars3.githubusercontent.com/u/11214?v=3&s=460'
-  },{
-    id: 2,
-    name: 'Adam Bradleyson',
-    lastText: 'I should buy a boat',
-    face: 'https://pbs.twimg.com/profile_images/479090794058379264/84TKj_qa.jpeg'
-  }, {
-    id: 3,
-    name: 'Perry Governor',
-    lastText: 'Look at my mukluks!',
-    face: 'https://pbs.twimg.com/profile_images/598205061232103424/3j5HUXMY.png'
-  }, {
-    id: 4,
-    name: 'Mike Harrington',
-    lastText: 'This is wicked good ice cream.',
-    face: 'https://pbs.twimg.com/profile_images/578237281384841216/R3ae1n61.png'
-  }];
+  var chats = [];
+  Data.get('chat', 'get', false).then(function(result){
+    var chats = result;  
+  });
 
   return {
     all: function() {
@@ -47,4 +23,43 @@ angular.module('starter.services', [])
       return null;
     }
   };
-});
+})
+
+.factory('Data',["$http", "$injector", "$q", function($http, $injector, $q){
+  return{
+    get : function(methodname, type, server, parameters){
+      var q = $injector.get("$q");
+      var deferred = $q.defer();
+      var method = 'GET';
+      var params = {};
+      if (type == 'post') {
+          method = 'POST';
+          params = parameters;
+      }
+      if (server) {
+        var url = "contextPath" + methodname;
+      } else {
+        var url = 'json/' + methodname + ".json";
+      }
+      
+      $http({
+          method: method,
+          url: url,
+          params: params
+      }).success(function(data, status, headers, config) {
+        if (data.status == 'OK') {
+          deferred.resolve(data.response);
+        } else {
+          if (data.error != undefined) {
+            console.error("error: ", data.message);
+          } else {
+            deferred.reject(data);
+          }
+        }
+      }).error(function() {
+        console.log("error block")
+      });
+      return deferred.promise;
+    }
+  }
+}]);
